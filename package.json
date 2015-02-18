@@ -12,7 +12,7 @@
     "posttest": "echo \"Error: no posttest specified\" && exit 1",
     "prepublish": "jshint js/**.js",
     "publish:templates": "handlebars templates/ -e hbs -c handlebars --min -f js/templates.js",
-    "publish:js": "echo \"Publishing javascript...\"",
+    "publish:js": "browserify js/main.js > js/bundle.js",
     "publish": "npm run publish:templates && npm run publish:js",
     "postpublish": "echo \"Done publishing\"",
     "start": "NODE_ENV=development PORT=3000 HOST=localhost node index.js"
