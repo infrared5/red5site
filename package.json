@@ -11,11 +11,13 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "posttest": "echo \"Error: no posttest specified\" && exit 1",
     "prepublish": "jshint js/**.js",
-    "publish:templates": "handlebars templates/ -e hbs -c handlebars --min -f js/templates.js",
+    "publish:posts": "handlebars posts/ -e hbs -c handlebars --min -f js/posts.js",
+    "publish:templates": "handlebars templates -e hbs -c handlebars --min -f js/templates.js",
     "publish:js": "browserify js/main.js > js/bundle.js",
-    "publish": "npm run publish:templates && npm run publish:js",
+    "publish": "npm run publish:templates && npm run publish:posts && npm run publish:js",
     "postpublish": "echo \"Done publishing\"",
-    "start": "NODE_ENV=development PORT=3000 HOST=localhost node index.js"
+    "start": "NODE_ENV=development PORT=3000 HOST=localhost node index.js",
+    "createpost": "node createpost.js"
   },
   "repository": {
     "type": "git",
