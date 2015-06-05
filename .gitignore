@@ -1,1 +1,4 @@
 /node_modules
+/js/posts.js
+/js/templates.js
+/js/bundle.js
