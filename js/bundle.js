@@ -90,7 +90,8 @@
   function showPage ( ctx, next ) {
     if ( tmpls.hasOwnProperty( ctx.page ) ) {
       if ( !!$container ) {
-        $container.html( tmpls[ ctx.page ]( {} ) );
+        var data = ctx.page === 'news' ? {posts: posts} : {};
+        $container.html( tmpls[ ctx.page ]( data ) );
       }
     }
 
