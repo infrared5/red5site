@@ -39,6 +39,7 @@
     "serve-static": "^1.9.1"
   },
   "dependencies": {
-    "handlebars": "^3.0.0"
+    "handlebars": "^3.0.0",
+    "page": "^1.6.3"
   }
 }
