@@ -17,15 +17,28 @@
     for ( var tmpl in tmpls ) {
       if ( tmpls.hasOwnProperty ( tmpl ) ) {
         if ( isPostFormatRegEx.test( tmpl ) ) {
-          var date = new Date( tmpl.replace( postSplitterRegEx, '$1' ) ),
+          var date = tmpl.replace( postSplitterRegEx, '$1' ),
               name = tmpl.replace( postSplitterRegEx, '$2' )
                       .replace( /\-{3}/g, ' - ' )
                       .replace( /([^\- ])\-([^\- ])/g, '$1 $2' );
 
-          posts.push( new Post( date, name, tmpls[ tmpl ]( {} ) ) );
+          posts.push( new Post( date, name, tmpls[ tmpl ] ) );
         }
       }
     }
+  }
+
+  function addMostRecentPosts () {
+    var $postList = $( '.post-list' ),
+        str = '';
+
+    $postList.empty();
+
+    for ( var i = 0, l = Math.min(5, posts.length); i < l; i++ ) {
+      str += '<li><a href="/post/' + i + '" class="hover-color">' + posts[i].name + '</a></li>';
+    }
+
+    $postList.append( str );
   }
 
   function setPage ( ctx, next ) {
@@ -38,7 +51,8 @@
 
     ctx.page = page;
 
-    if ( !tmpls.hasOwnProperty( page ) ) {
+    //  Set as 404 if 1) we don't have a template for it and 2) it's not a post
+    if ( !tmpls.hasOwnProperty( page ) && !/^\/post\/\d+$/.test( ctx.path ) ) {
       ctx.path = '/404';
       ctx.page = '404';
     }
@@ -82,13 +96,28 @@
     //  Stops the chain of callbacks
   }
 
+  function showPost ( ctx, next ) {
+    var post = posts[ +ctx.params.id ];
+
+    if ( !!$container ) {
+      $container.html( post.content( {} ) );
+    }
+
+    if ( !!next ) {
+      next();
+    }
+  }
+
   $( document ).ready( function () {
     $container = $( '#latest-news .container' );
 
     accumulatePosts();
+    addMostRecentPosts();
 
     //  Setup routing
-    page( '*', setPage, setActiveLinkBasedOnPath, showPage );
+    page( '*', setPage, setActiveLinkBasedOnPath );
+    page( '/post/:id', showPost );
+    page( '*', showPage );
 
     page( {
       hashbang: true
