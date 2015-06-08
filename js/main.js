@@ -5,61 +5,93 @@
   var Templates   = require( './templates.js' );
   var Posts       = require( './posts.js' );
   var Post        = require( './post.js' );
+  var page        = require( 'page' );
+  var tmpls       = Handlebars.templates;
+  var posts       = [];
+  var $container  = null;
 
-  $( document ).ready( function () {
-    var $container = $( '#latest-news .container' ),
-        posts = [],
-        isPostFormatRegEx = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z-/,
+  function accumulatePosts () {
+    var isPostFormatRegEx = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z-/,
         postSplitterRegEx = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)-(.*)$/;
 
-    for ( var x in Handlebars.templates ) {
-      if ( Handlebars.templates.hasOwnProperty ( x ) ) {
-        if ( isPostFormatRegEx.test( x ) ) {
-          var date = new Date( x.replace( postSplitterRegEx, '$1' ) ),
-              name = x.replace( postSplitterRegEx, '$2' )
+    for ( var tmpl in tmpls ) {
+      if ( tmpls.hasOwnProperty ( tmpl ) ) {
+        if ( isPostFormatRegEx.test( tmpl ) ) {
+          var date = new Date( tmpl.replace( postSplitterRegEx, '$1' ) ),
+              name = tmpl.replace( postSplitterRegEx, '$2' )
                       .replace( /\-{3}/g, ' - ' )
                       .replace( /([^\- ])\-([^\- ])/g, '$1 $2' );
 
-          posts.push( new Post( date, name, Handlebars.templates[ x ]( {} ) ) );
+          posts.push( new Post( date, name, tmpls[ tmpl ]( {} ) ) );
         }
       }
     }
+  }
 
-    //  Load up default index page
-    $container.html( Handlebars.templates.index( {} ) );
+  function setPage ( ctx, next ) {
+    var page = ctx.path.substring(1);
 
-    $( 'nav' ).on( 'click', 'a', function onLinkClick (e) {
-      var dropdown = $( this ).parents( '.dropdown' ),
-          page = e.currentTarget.className.replace( /page\-([A-Za-z\-]+)/i, '$1' );
+    //  Ensure / matches index
+    if ( page.length === 0 ) {
+      page = 'index';
+    }
 
-      $( '.active' ).removeClass( 'active' );
+    ctx.page = page;
 
-      $( this ).parent().addClass( 'active' );
+    if ( !tmpls.hasOwnProperty( page ) ) {
+      ctx.path = '/404';
+      ctx.page = '404';
+    }
 
-      if ( dropdown.length > 0 ) {
-        dropdown.addClass( 'active' );
+    //  Continue down callback chain
+    if ( !!next ) {
+      next();
+    }
+  }
+
+  function setActiveLinkBasedOnPath ( ctx, next ) {
+    var path = ctx.path !== '/404' ? ctx.path : '/',
+        $active = $( '.active' ),
+        $target = $( 'nav a[href="' + ctx.path + '"]' ),
+        dropdowns = $target.parents( '.dropdown' );
+
+    $active.removeClass( 'active' );
+    
+    if ( dropdowns.length > 0 ) {
+      dropdowns.addClass( 'active' );
+    }
+    else {
+      $target.addClass( 'active' );
+    }
+
+    $target.parent().addClass( 'active' );
+    
+    //  Continue down callback chain
+    if ( !!next ) {
+      next();
+    }
+  }
+
+  function showPage ( ctx, next ) {
+    if ( tmpls.hasOwnProperty( ctx.page ) ) {
+      if ( !!$container ) {
+        $container.html( tmpls[ ctx.page ]( {} ) );
       }
-      else {
-        $( this ).addClass( 'active' );
-      }
+    }
 
-      if ( Handlebars.templates.hasOwnProperty( page ) ) {
-        var data = {};
+    //  Stops the chain of callbacks
+  }
 
-        if ( page === 'news' ) {
-          data = {
-            posts: posts
-          };
-        }
+  $( document ).ready( function () {
+    $container = $( '#latest-news .container' );
 
-        $container.html( Handlebars.templates[ page ]( data ) );
-      }
-      else {
-        $container.html( Handlebars.templates[ '404' ]( {} ) );
-      }
+    accumulatePosts();
 
-      e.preventDefault();
-      return false;
+    //  Setup routing
+    page( '*', setPage, setActiveLinkBasedOnPath, showPage );
+
+    page( {
+      hashbang: true
     } );
   } );
 })();
